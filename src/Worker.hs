@@ -47,37 +47,38 @@ runWorker chan settings cbs = readLoop $ State {
 
       onChangeStatus cbs status''
 
-      when ((status state, status'') == (Work, Relax)) $ ($ startTime state) $ maybe
+      when ((status state, status'') == (Work undefined, Relax)) $ ($ startTime state) $ maybe
           (return ())
           (\t -> getCurrentTime >>= (onPomodoroEnd cbs (pomodoros state) (name state) t))
 
       let status' = status''
 
       let pomodoros' = case (status state, status') of
-                         (Work, Relax) -> (pomodoros state) + 1
+                         (Work _, Relax) -> (pomodoros state) + 1
                          (_   , _)     -> (pomodoros state)
 
       tid' <- case status' of
-        Work -> Just <$> (forkIO $ statusDelay (workInterval settings) Relax)
+        Work Nothing -> Just <$> (forkIO $ statusDelay (workInterval settings) Relax)
+        Work (Just customtime) -> Just <$> (forkIO $ statusDelay customtime Relax)
 
         Relax -> let
           nextInterval = ($ settings) $ case pomodoros' `mod` (pomodorosPerRound settings) of
                                      0 -> longerRelaxInterval
                                      _ -> relaxInterval
           nextStatus = case (autoRestart settings) of
-                         True  -> Work
+                         True  -> Work Nothing
                          False -> Inactive
           in Just <$> (forkIO $ statusDelay nextInterval nextStatus)
 
         Inactive -> return Nothing
 
       startTime' <- case (status state, status') of
-        (_   , Work)     -> Just <$> getCurrentTime
+        (_   , Work _)     -> Just <$> getCurrentTime
         (_   , Inactive) -> return $ Nothing
         (_   , _)        -> return $ startTime state
 
       let name' = case (status state, status') of
-                     (_, Work) -> name''
+                     (_, Work _) -> name''
                      (_, _)    -> name state
 
       return $ State {

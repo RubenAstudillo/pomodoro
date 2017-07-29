@@ -26,19 +26,24 @@ data Resources = Resources {
     icons        :: [(PomodoroStatus, Icon ())]
   }
 
+--------------------------------------------------------
+iconName :: PomodoroStatus -> String
+iconName st = case st of { Work _ -> "Work" ; other -> show other }
+
 initResources :: IO Resources
 initResources =
   -- Get singular icon
-  let getIcon status = getDataFileName ("res/" ++ show status ++ ".png")
+  let getIcon status = getDataFileName ("res/" ++ iconName status ++ ".png")
                        >>= flip iconCreateFromFile sizeNull
                        >>= \i -> return (status, i)
-  in do icons <- traverse getIcon [Work, Relax, Inactive]
+  in do icons <- traverse getIcon [Work Nothing, Relax, Inactive]
         return $ Resources icons
 
 setIcon :: Resources -> TaskBarIcon a -> PomodoroStatus -> IO ()
 setIcon res tbi status' = do
-  _ <- taskBarIconSetIcon tbi (fromJust $ lookup status' (icons res)) (show status')
+  _ <- taskBarIconSetIcon tbi (fromJust $ lookup status' (icons res)) (iconName status')
   return ()
+--------------------------------------------------------
 
 
 data GUICallforths = GUICallforths {

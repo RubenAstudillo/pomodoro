@@ -37,8 +37,8 @@ main = getAppUserDataDirectory "pomodoro"
 
      dispatch (cmd:cmds) = case cmd of
        "--start"  -> case cmds of
-         [name] -> sendMessage Work (Just name)
-         []     -> sendMessage Work Nothing
+         [name] -> sendMessage (Work Nothing) (Just name)
+         []     -> sendMessage (Work Nothing) Nothing
          _      -> showUsage 
 
        "--stop"   -> sendMessage Inactive Nothing
@@ -91,8 +91,8 @@ runApp = do
   _ <- forkIO $ runListener socketPath chan
 
   runGUI settings $ GUICallbacks {
-      onIconClick = (writeChan chan) . (Message Work)
-    , onMenuStart = (writeChan chan) . (Message Work)
+      onIconClick = (writeChan chan) . (Message (Work Nothing))
+    , onMenuStart = (writeChan chan) . (Message (Work Nothing))
     , onMenuStop  = writeChan chan $ Message Inactive Nothing
 
     , onInit = \cfs -> do

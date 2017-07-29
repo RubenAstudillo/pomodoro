@@ -14,8 +14,17 @@ import Data.Serialize (Serialize)
 import Control.Monad (when)
 
 
-data PomodoroStatus = Work | Relax | Inactive
-  deriving (Show, Eq, Generic)
+data PomodoroStatus = Work (Maybe Int) -- timed event or default
+                    | Relax | Inactive
+  deriving (Show, Generic)
+
+instance Eq PomodoroStatus where
+  pom1 == pom2 = case (pom1, pom2) of
+                   (Work _, Work _)     -> True
+                   (Relax, Relax)       -> True
+                   (Inactive, Inactive) -> True
+                   _                    -> False
+
 instance Serialize PomodoroStatus
 
 
@@ -25,7 +34,7 @@ data Message = Message PomodoroStatus (Maybe String)
 instance Serialize Message
 
 interpret :: PomodoroStatus -> String
-interpret Work     = "Stay focused!"
+interpret (Work _) = "Stay focused!"
 interpret Relax    = "Take a break"
 interpret Inactive = "The timer is inactive"
 
