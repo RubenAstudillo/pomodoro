@@ -92,7 +92,7 @@ runApp = do
 
   runGUI settings $ GUICallbacks {
       onIconClick = (writeChan chan) . (Message (Work Nothing))
-    , onMenuStart = (writeChan chan) . (Message (Work Nothing))
+    , onMenuStart = \time -> (writeChan chan) . (Message (maybe (Work Nothing) workMin time))
     , onMenuStop  = writeChan chan $ Message Inactive Nothing
 
     , onInit = \cfs -> do

@@ -2,6 +2,7 @@
 
 module Common (
     PomodoroStatus(Work, Relax, Inactive)
+  , workMin
   , Message(..)
   , interpret
   , waitUntil
@@ -27,6 +28,8 @@ instance Eq PomodoroStatus where
 
 instance Serialize PomodoroStatus
 
+workMin :: Int -> PomodoroStatus
+workMin i = Work (Just (i * 60))
 
 data Message = Message PomodoroStatus (Maybe String)
   deriving (Show, Eq, Generic)

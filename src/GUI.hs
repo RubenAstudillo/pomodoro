@@ -9,7 +9,7 @@ module GUI (
 import Graphics.UI.WX hiding (sound)
 import Graphics.UI.WXCore
 
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, isJust)
 import Libnotify ((<>), summary, body, timeout, Timeout(..), display_)
 import System.Directory (findExecutable)
 import System.Environment (getExecutablePath)
@@ -54,7 +54,7 @@ data GUICallforths = GUICallforths {
 
 data GUICallbacks = GUICallbacks {
     onIconClick :: Maybe String -> IO ()
-  , onMenuStart :: Maybe String -> IO ()
+  , onMenuStart :: Maybe Int -> Maybe String -> IO ()
   , onMenuStop  :: IO ()
   , onInit      :: GUICallforths -> IO ()
   }
@@ -129,7 +129,12 @@ runGUI settings cbs = start $ initGUI where
   onTaskBarEvt _   _ cb TaskBarIconLeftDown  = cb $ onIconClick cbs
   onTaskBarEvt tbi f cb TaskBarIconRightDown = do
     popupMenu <- menuPane []
-    _ <- menuItem popupMenu [text := "Start", on command := cb $ onMenuStart cbs] 
+    _ <- menuItem popupMenu [text := "Start", on command := cb $ onMenuStart cbs Nothing]
+    _ <- menuItem popupMenu
+            [ text       := "Start custom"
+            , on command := do i <- customTimeWidget f
+                               when (isJust i) (cb $ onMenuStart cbs i)
+            ]
     _ <- menuItem popupMenu [text := "Stop" , on command := onMenuStop cbs]
     _ <- menuItem popupMenu [text := "Exit" , on command := taskBarIconDelete tbi >> close f]
     _ <- taskBarIconPopupMenu tbi popupMenu
@@ -137,6 +142,7 @@ runGUI settings cbs = start $ initGUI where
   
   onTaskBarEvt _ _ _ _ = return ()
 
-
-
-  
+customTimeWidget :: Frame a -> IO (Maybe Int)
+customTimeWidget f =
+  do win <- get f parent
+     numberDialog win "How much time to setup?" ">" "no" 45 0 90
